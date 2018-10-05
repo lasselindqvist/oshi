@@ -147,11 +147,17 @@ public class WindowsOperatingSystem extends AbstractOperatingSystem {
         // Save this buffer size for later use
         IntByReference lpcbData = new IntByReference(this.perfDataBufferSize);
         Pointer pPerfData = new Memory(this.perfDataBufferSize);
-        while (WinError.ERROR_MORE_DATA == Advapi32.INSTANCE.RegQueryValueEx(WinReg.HKEY_PERFORMANCE_DATA,
-                processIndexStr, 0, null, pPerfData, lpcbData)) {
+        int winError = Advapi32.INSTANCE.RegQueryValueEx(WinReg.HKEY_PERFORMANCE_DATA,
+                processIndexStr, 0, null, pPerfData, lpcbData);
+        LOG.error("winError value: " + winError);
+        
+        while (WinError.ERROR_MORE_DATA == winError) {
             this.perfDataBufferSize += 4096;
             lpcbData.setValue(this.perfDataBufferSize);
             pPerfData = new Memory(this.perfDataBufferSize);
+            winError = Advapi32.INSTANCE.RegQueryValueEx(WinReg.HKEY_PERFORMANCE_DATA,
+                processIndexStr, 0, null, pPerfData, lpcbData);
+            LOG.error("winError value: " + winError);
         }
 
         PERF_DATA_BLOCK perfData = new PERF_DATA_BLOCK(pPerfData.share(0));
